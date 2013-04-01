@@ -279,17 +279,17 @@ class TestGaussPdf(PbTestCase):
         """Test that copying GaussPdf works as expected"""
         o = self.gauss  # original
         c = copy(o)  # copy
-        self.assertTrue(id(o) != id(c))
-        self.assertTrue(id(o.mu) == id(c.mu))
-        self.assertTrue(id(o.R) == id(c.R))
-        self.assertTrue(id(o.rv) == id(c.rv))
-        self.assertTrue(id(o.cond_rv) == id(c.cond_rv))
+        self.assertNotEqual(id(o), id(c))
+        self.assertArraysSame(o.mu, c.mu)
+        self.assertArraysSame(o.R, c.R)
+        self.assertEqual(id(o.rv), id(c.rv))
+        self.assertEqual(id(o.cond_rv), id(c.cond_rv))
 
     def test_deepcopy(self):
         """Test that deep copying GaussPdf works as expected"""
         o = self.gauss  # original
         c = deepcopy(o)  # copy
-        self.assertTrue(id(o) != id(c))
+        self.assertNotEqual(id(o), id(c))
         self.assertArraysEqualNotSame(o.mu, c.mu)
         self.assertArraysEqualNotSame(o.R, c.R)
         self.assertRVsEqualNotSame(o.rv, c.rv)
@@ -714,13 +714,13 @@ class TestProdPdf(PbTestCase):
 
     def test_mean(self):
         mean = self.prod.mean()
-        self.assertTrue(np.all(mean[0:2] == self.uni.mean()))
-        self.assertTrue(np.all(mean[2:3] == self.gauss.mean()))
+        self.assertApproxEqual(mean[0:2], self.uni.mean())
+        self.assertApproxEqual(mean[2:3], self.gauss.mean())
 
     def test_variance(self):
         variance = self.prod.variance()
-        self.assertTrue(np.all(variance[0:2] == self.uni.variance()))
-        self.assertTrue(np.all(variance[2:3] == self.gauss.variance()))
+        self.assertApproxEqual(variance[0:2], self.uni.variance())
+        self.assertApproxEqual(variance[2:3], self.gauss.variance())
 
     def test_eval_log(self):
         test_points = np.array([  # point we evaluate product in
@@ -795,10 +795,10 @@ class TestMLinGaussCPdf(PbTestCase):
         condlognorm = pb.MLinGaussCPdf(cov, np.array([[1.]]), np.array([0.]), base_class=pb.LogNormPdf)
         lognorm = pb.LogNormPdf(mean, cov)
 
-        self.assertEqual(condlognorm.mean(mean), lognorm.mean())
-        self.assertEqual(condlognorm.variance(mean), lognorm.variance())
+        self.assertApproxEqual(condlognorm.mean(mean), lognorm.mean())
+        self.assertApproxEqual(condlognorm.variance(mean), lognorm.variance())
         for x in np.array([[-0.4],[2.4],[4.5],[12.5]]):
-            self.assertEqual(condlognorm.eval_log(x, mean), lognorm.eval_log(x))
+            self.assertApproxEqual(condlognorm.eval_log(x, mean), lognorm.eval_log(x))
         for i in range(30):
             # only test that samples are positive
             self.assertTrue(condlognorm.sample(mean)[0] >= 0)
@@ -931,10 +931,10 @@ class TestLinGaussCPdf(PbTestCase):
         condlognorm = pb.LinGaussCPdf(1., 0., 1., 0., base_class=pb.LogNormPdf)
         lognorm = pb.LogNormPdf(mean, cov)
 
-        self.assertEqual(condlognorm.mean(cond), lognorm.mean())
-        self.assertEqual(condlognorm.variance(cond), lognorm.variance())
+        self.assertApproxEqual(condlognorm.mean(cond), lognorm.mean())
+        self.assertApproxEqual(condlognorm.variance(cond), lognorm.variance())
         for x in np.array([[-0.4],[2.4],[4.5],[12.5]]):
-            self.assertEqual(condlognorm.eval_log(x, cond), lognorm.eval_log(x))
+            self.assertApproxEqual(condlognorm.eval_log(x, cond), lognorm.eval_log(x))
         for i in range(30):
             # only test that samples are positive
             self.assertTrue(condlognorm.sample(cond)[0] >= 0)
@@ -1002,10 +1002,10 @@ class TestGaussCPdf(PbTestCase):
 
     def setUp(self):
         def f(x):
-            return -x
+            return -np.asarray(x)
         self.f = f
         def g(x):
-            return np.diag(-x)
+            return -np.diag(x)
         self.g = g
         self.cgauss = pb.GaussCPdf(2, 2, f, g)
         self.gauss = pb.GaussPdf(np.array([1., 2.]), np.array([[1., 0.], [0., 2.]]))
@@ -1016,8 +1016,8 @@ class TestGaussCPdf(PbTestCase):
         lognorm = pb.LogNormPdf(np.array([1.]), np.array([[1.]]))
         cond = np.array([-1.])  # makes condlognorm behave as lognorm
 
-        self.assertEqual(condlognorm.mean(cond), lognorm.mean())
-        self.assertEqual(condlognorm.variance(cond), lognorm.variance())
+        self.assertApproxEqual(condlognorm.mean(cond), lognorm.mean())
+        self.assertApproxEqual(condlognorm.variance(cond), lognorm.variance())
         for x in np.array([[-0.4],[2.4],[4.5],[12.5]]):
             self.assertEqual(condlognorm.eval_log(x, cond), lognorm.eval_log(x))
         for i in range(30):
